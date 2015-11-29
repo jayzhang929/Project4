@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
 
 Bank* bank_create()
 {
@@ -29,6 +31,7 @@ Bank* bank_create()
 
     // Set up the protocol state
     // TODO set up more, as needed
+    bank->users = list_create();
 
     return bank;
 }
@@ -57,7 +60,124 @@ ssize_t bank_recv(Bank *bank, char *data, size_t max_data_len)
 
 void bank_process_local_command(Bank *bank, char *command, size_t len)
 {
-    // TODO: Implement the bank's local commands
+    static char create_user[] = "create-user";
+    static char deposit[] = "deposit";
+    static char balance[] = "balance";
+    static char invalid[] = "Invalid command";
+    static char create_user_error[] = "Usage: create-user <user-name> <pin> <balance>";
+    static char error_file[] = "Error creating card file for user";
+    static char balance_error[] = "Usage: balance <user-name>";
+
+    const char space[] = " ";
+    char user_name[1024];
+    char file_name[1024];
+    char *token;
+    strtok(command, "\n");
+    token = strtok(command, space);
+
+    /*
+    while( token != NULL ) {
+        printf( "%s\n", token );
+    
+        token = strtok(NULL, space);
+    }
+    */
+
+    if (strcmp(token, create_user) == 0) {
+        char pin[5];
+        int balance;
+
+        // get user name
+        token = strtok(NULL, space);
+
+        
+        if (token != NULL) {
+            strcpy(user_name, token);
+
+            // get user pin number
+            token = strtok(NULL, space);
+
+            
+            if (token != NULL) {
+                strcpy(pin, token);
+                // get user balance
+                token = strtok(NULL, space);
+
+                if (token != NULL) {
+                    balance = atoi(token);
+                    token = strtok(NULL, space);
+
+                    if (token != NULL) {
+                        printf("%s\n", create_user_error);
+                    }
+
+                    if (list_find(bank->users, user_name) == NULL) {
+                        
+                        list_add(bank->users, user_name, pin);
+                        
+                        // create card file name
+                        strcpy(file_name, user_name);
+                        strcat(file_name, ".card");
+                        // write pin number and balance (with an empty space in between) into the file
+                        FILE *fp;
+                        fp = fopen(file_name, "w+");
+                        if (fp == NULL) {
+                            printf("%s ", error_file);
+                            printf("%s\n", user_name); 
+                        } else {
+                            fprintf(fp, "%s ", pin);
+                            fprintf(fp, "%d", balance);
+                            printf("%s ", "Created user");
+                            printf("%s\n", user_name);
+                        }
+
+                        fclose(fp);
+                    } else {
+                        printf("%s ", "Error: user");
+                        printf("%s ", user_name);
+                        printf("%s\n", "already exists");
+                    }
+                } else 
+                    printf("%s\n", create_user_error);
+            } else 
+                printf("%s\n", create_user_error); 
+            
+
+        } else
+            printf("%s\n", create_user_error); 
+
+            
+    } else if (strcmp(token, deposit) == 0) {
+
+
+    } else if (strcmp(token, balance) == 0) {
+
+        token = strtok(NULL, space);
+        strcpy(user_name, token);
+
+        token = strtok(NULL, space);
+        if (token != NULL) {
+            printf("%s\n", balance_error);
+        }
+
+        if (list_find(bank->users, user_name) == NULL) {
+            printf("%s\n", "No such user");
+        } else { 
+            FILE *fp;
+            char buff[1024];
+            strcpy(file_name, user_name);
+            strcat(file_name, ".card");
+
+            fp = fopen(file_name, "r");
+            fgets(buff, 1024, (FILE*)fp);
+            token = strtok(buff, space);
+            char *current_balance = strtok(NULL, space);
+            printf("%s\n", current_balance);
+        }
+
+    } else {
+        printf("%s\n", invalid);
+    }
 }
 
 void bank_process_remote_command(Bank *bank, char *command, size_t len)
