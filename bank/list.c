@@ -28,6 +28,19 @@ void list_free(List *list)
     }
 }
 
+void list_print(List * list) {
+    if (list == NULL)
+        return;
+
+    ListElem *curr = list->head;
+    while(curr != NULL)
+    {
+        // printf("%s\n", curr->key);
+        printf("%s\n", curr->key);
+        curr = curr->next;
+    }
+}
+
 void* list_find(List *list, const char *key)
 {
     if(list == NULL)
@@ -36,10 +49,9 @@ void* list_find(List *list, const char *key)
     ListElem *curr = list->head;
     while(curr != NULL)
     {
-        // printf("in list.c: %s\n", curr->key);
-        if(strcmp(curr->key, key) == 0)
+        if(strcmp(curr->key, key) == 0) {
             return curr->val;
-        // printf("%s\n", "end in list.c");
+        }
         curr = curr->next;
     }
 
@@ -50,7 +62,6 @@ void list_add(List *list, char *key, void *val)
 {
     // Allow duplicates
     // assert(list_find(list, key) == NULL);
-
     ListElem *elem = (ListElem*) malloc(sizeof(ListElem));
     elem->key = key;
     elem->val = val;
@@ -58,9 +69,11 @@ void list_add(List *list, char *key, void *val)
 
     if(list->tail == NULL)
         list->head = list->tail = elem;
-    else
+    else {
         list->tail->next = elem;
-
+        list->tail = list->tail->next;
+        printf("key at the end: %s\n", list->tail->key);
+    }
     list->size++;
 }
 

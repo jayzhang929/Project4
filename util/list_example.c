@@ -17,7 +17,7 @@ int main()
     printf("Size = %d\n", ls->size);
     list_add(ls, "Alice", "456");
     printf("Size = %d\n", ls->size);
-    list_free(ls);
+    // list_free(ls);
 
 	return EXIT_SUCCESS;
 }
