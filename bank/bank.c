@@ -67,6 +67,7 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
     static char create_user_error[] = "Usage: create-user <user-name> <pin> <balance>";
     static char error_file[] = "Error creating card file for user";
     static char balance_error[] = "Usage: balance <user-name>";
+    static char deposit_error[] = "Usage: deposit <user-name> <amt>";
 
     const char space[] = " ";
     char user_name[1024];
@@ -157,7 +158,52 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
 
             
     } else if (strcmp(token, deposit) == 0) {
+        token = strtok(NULL, space);
+        if (token != NULL) {
+            strcpy(user_name, token);
+            if (list_find(bank->users, user_name) == NULL) 
+                printf("%s\n", "No such user");
+            else {
+                token = strtok(NULL, space);
+                if (token == NULL)
+                    printf("%s\n", deposit_error);
+                else {
+                    int deposit = atoi(token);
+                    if (strtok(NULL, space) != NULL)
+                        printf("%s\n", deposit_error);
+                    else {
+                        FILE *fp;
+                        char buff[1024];
+                        strcpy(file_name, user_name);
+                        strcat(file_name, ".card");
 
+                        // open file and read in pin and current balance
+                        fp = fopen(file_name, "r");
+                        fgets(buff, 1024, (FILE*)fp);
+                        char *pin = strtok(buff, space);
+                        char *current_balance = strtok(NULL, space);
+                        int cur_balance = atoi(current_balance);
+                        cur_balance = cur_balance + deposit;
+                        fclose(fp);
+
+                        // rewrite to file with old pin and new balance
+                        fp = fopen(file_name, "w+");
+                        if (fp == NULL) {
+                            printf("%s ", error_file);
+                            printf("%s\n", user_name); 
+                        } else {
+                            fprintf(fp, "%s ", pin);
+                            fprintf(fp, "%d", cur_balance);
+                            printf("$%d %s %s's account\n", deposit, "added to", user_name);
+                        }
+
+                        fclose(fp);
+
+                    }
+                }
+            }
+        } else
+            printf("%s\n", deposit_error);
     } else if (strcmp(token, balance) == 0) {
         // char user_name[1024];
         token = strtok(NULL, space);
@@ -180,6 +226,8 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                 token = strtok(buff, space);
                 char *current_balance = strtok(NULL, space);
                 printf("$%s\n", current_balance);
+
+                fclose(fp);
             }
         }
     } else {

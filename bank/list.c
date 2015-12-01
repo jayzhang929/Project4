@@ -72,7 +72,7 @@ void list_add(List *list, char *key, void *val)
     else {
         list->tail->next = elem;
         list->tail = list->tail->next;
-        printf("key at the end: %s\n", list->tail->key);
+        // printf("key at the end: %s\n", list->tail->key);
     }
     list->size++;
 }
