@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include "hash_table.h"
 
 typedef struct _Bank
 {
@@ -29,6 +30,7 @@ typedef struct _Bank
 
     // Protocol state
     // TODO add more, as needed
+    List *users;
 } Bank;
 
 Bank* bank_create();

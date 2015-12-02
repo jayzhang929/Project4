@@ -8,16 +8,17 @@ int main()
     printf("Charlie -> %s\n", (list_find(ls, "Charlie") == NULL ? "Not Found" : "FAIL"));
     list_add(ls, "Alice", "123");
     list_add(ls, "Bob", "345");
+    list_add(ls, "Danny", "999");
 
     printf("Alice -> '%s'\n", (char*) list_find(ls, "Alice"));
     printf("Bob -> '%s'\n", (char*) list_find(ls, "Bob"));
-
+    printf("Danny -> '%s'\n", (char*) list_find(ls, "Danny"));
     printf("Charlie -> %s\n", (list_find(ls, "Charlie") == NULL ? "Not Found" : "FAIL"));
 
     printf("Size = %d\n", ls->size);
     list_add(ls, "Alice", "456");
     printf("Size = %d\n", ls->size);
-    list_free(ls);
+    // list_free(ls);
 
 	return EXIT_SUCCESS;
 }
