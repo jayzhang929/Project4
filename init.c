@@ -28,13 +28,13 @@ int main(int arg, char**argv) {
 	sprintf(atmp,"%s%s",argv[1],".atm");
 	}
                //Remember to delete this ..just deletes the mad files for now
-               char command[50];
-		char comman[50];
-		strcpy(command,"rm -f file.bank");
-                strcpy(comman,"rm -f file.atm");
+               //char command[50];
+		//char comman[50];
+		//strcpy(command,"rm -f file.bank");
+               // strcpy(comman,"rm -f file.atm");
 
-        	system(command);
-                system(comman); 
+        	//system(command);
+                //system(comman); 
 
          //Check if file already exits
 	if(access(bankp,F_OK) != -1 ||access(atmp,F_OK) !=-1) {
@@ -63,6 +63,8 @@ int main(int arg, char**argv) {
           			 fputs(line,bankf);
 	   			 fputs(line,atmf);
 			}
+                        //Deallocate memory for line  
+			free(line);
 		}else {
 		     printf("Error creating initialization files\n");
 	  	     return 64;

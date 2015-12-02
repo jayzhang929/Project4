@@ -25,6 +25,9 @@ typedef struct _ATM
 
     // Protocol state
     // TODO add more, as needed
+   int session;   //TO kknow if we are in a session or not
+   char username[251];  //To hold a users user_name
+   FILE *init; //To initialize the atm.card
 } ATM;
 
 ATM* atm_create();

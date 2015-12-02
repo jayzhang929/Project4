@@ -28,13 +28,13 @@ int main(int arg, char**argv) {
 	sprintf(atmp,"%s%s",argv[1],".atm");
 	}
                //Remember to delete this ..just deletes the mad files for now
-               char command[50];
-		char comman[50];
-		strcpy(command,"rm -f file.bank");
-                strcpy(comman,"rm -f file.atm");
+               //char command[50];
+		//char comman[50];
+		//strcpy(command,"rm -f file.bank");
+               // strcpy(comman,"rm -f file.atm");
 
-        	system(command);
-                system(comman); 
+        	//system(command);
+                //system(comman); 
 
          //Check if file already exits
 	if(access(bankp,F_OK) != -1 ||access(atmp,F_OK) !=-1) {
@@ -48,7 +48,7 @@ int main(int arg, char**argv) {
                 key = fopen("symm_key","r"); 
                 
 		
-      	system("openssl enc -aes-256-cbc -e -in plaintext.txt -out cipher.bin -pass file:symm_key -salt");
+      	//system("openssl enc -aes-256-cbc -e -in plaintext.txt -out cipher.bin -pass file:symm_key -salt");
          //open the files to write to them
   	if((bankf = fopen(bankp, "w")) == NULL || (atmf = fopen(atmp, "w")) == NULL ) {
 	  printf("Error creating initialization files\n");
