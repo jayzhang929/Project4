@@ -248,9 +248,13 @@ void bank_process_remote_command(Bank *bank, char *command, size_t len)
 	
     char sendline[1000];
     command[len]=0;
-    sprintf(sendline, "Bank got: %s", command);
+    strtok(command, "\n");
+    if (list_find(bank->users, command) == NULL)
+        sprintf(sendline, "%s", "no");
+    else
+        sprintf(sendline, "%s", "yes");
     bank_send(bank, sendline, strlen(sendline));
-    printf("Received the following:\n");
+    // printf("Received the following:\n");
     fputs(command, stdout);
 	
 }
