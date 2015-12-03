@@ -81,7 +81,7 @@ void atm_process_command(ATM *atm, char *command)
   	
 	char user_name[1024];
 	char file_name[1024];
-	char response[1024];
+	char response[4];
         const char space[] = " ";
         char *token,*pin;
 	int cur_balance ;
@@ -111,15 +111,16 @@ void atm_process_command(ATM *atm, char *command)
 		       
 
 		      //send to bank for verification
-		      //atm_send(atm, user_name, strlen(user_name));
-    		      //atm_recv(atm,response,1024);
-
-			strcpy(response, "yes");
+		       memset(response,0x00,strlen(response));
+		      atm_send(atm, user_name, strlen(user_name));
+    		   atm_recv(atm,response,1024);
+             
+			//strcpy(response, "yes");
 		       //Check response 
   		     if(strcmp(response, "yes") == 0){
 		      	
 			//Search for .card file
-			 FILE *fp;
+			          FILE *fp;
                         char buff[1024],userpin[1024],userpintemp[1024];
                         strcpy(file_name, user_name);
                         strcat(file_name, ".card");
@@ -137,9 +138,12 @@ void atm_process_command(ATM *atm, char *command)
                         //cur_balance = cur_balance + deposit;
 		                //Prompt for user's pin
 				printf("PIN? ");
-				fgets(userpintemp,1024,stdin);
-	 			strncpy(userpin,userpintemp,4);
+				// fgets(userpintemp,1024,stdin);
+	 			// strncpy(userpin,userpintemp,4);
+				fgets(userpin,1024,stdin);
+				strtok(userpin, "\n");
 				//compare with pin on file
+				printf("%s Got %s\n", pin, userpin);
   		           	if(strcmp(userpin,pin) ==0) {	
                                  	printf("Authorized\n");	
 					//start session
