@@ -79,31 +79,166 @@ void atm_process_command(ATM *atm, char *command)
     fputs(recvline,stdout);
 	*/
   	
-	char argv1[10000];
-	char argv2[10000];
-        char message[6];
-        char recvline[10];
-       atm->sesssion =1;
-       message ="Hello";
-      atm_send(atm,message,strlen(message));
-      n = atm_recv(atm,recvline,10);
-      //will do comparison
-      recvline[n] = 0;
-      fputs(recvline,stdout);
+	char user_name[1024];
+	char file_name[1024];
+	char response[1024];
+        const char space[] = " ";
+        char *token,*pin;
+	int cur_balance ;
+         strtok(command, "\n");
+         token = strtok(command, space);
 
-       sscanf(command, "%s %s",argv1,argv2);
-        //Check the input command to make sure its valid
-	if(strlen(argv1) > 13 || strlen(argv1) <1) {
-		printf("Invalid command\n");
-		return;	
-	}
 
-	if(strcmp(argv1, "begin-session") == 0) {
-		//check if there is a user alrea		
+
+      
+      // sscanf(command, "%s %s",argv1,argv2);
+      
+
+        //begin-session
+
+         if(strcmp(token, "begin-session") == 0) {
+		//Check to see no other user is logged in	 	
 		if(atm->session == 1) {
 			printf("A user is already logged in\n");
 			return;		
-		}	
-	}
+		}
+               //get user name
+	       token = strtok(NULL, space);
+          
+		if (token != NULL) {
+            
+		       strcpy(user_name, token);
+		       
+
+		      //send to bank for verification
+		      //atm_send(atm, user_name, strlen(user_name));
+    		      //atm_recv(atm,response,1024);
+
+			strcpy(response, "yes");
+		       //Check response 
+  		     if(strcmp(response, "yes") == 0){
+		      	
+			//Search for .card file
+			 FILE *fp;
+                        char buff[1024],userpin[1024],userpintemp[1024];
+                        strcpy(file_name, user_name);
+                        strcat(file_name, ".card");
+                           
+                        // open file and read in pin and current balance
+                        fp = fopen(file_name, "r");
+                        if(fp == NULL) {
+			  printf("Unable to access %s's card\n",user_name);
+			  return;			
+			}
+                        fgets(buff, 1024, (FILE*)fp);
+                        pin = strtok(buff, space);
+                        char *current_balance = strtok(NULL, space);
+                        cur_balance = atoi(current_balance);
+                        //cur_balance = cur_balance + deposit;
+		                //Prompt for user's pin
+				printf("PIN? ");
+				fgets(userpintemp,1024,stdin);
+	 			strncpy(userpin,userpintemp,4);
+				//compare with pin on file
+  		           	if(strcmp(userpin,pin) ==0) {	
+                                 	printf("Authorized\n");	
+					//start session
+					strncpy(atm->username,user_name,strlen(user_name));
+					atm->session = 1;
+                                     return;	        
+				}else {
+				 printf("Not authorized\n");
+				 return;
+				}
+					
+			//close file                        
+			fclose(fp);
+		     } else {
+		     	printf("No such user\n");
+			return; 
+		     }    
+
+		}else {
+                 printf("Usage: begin-session <user-name>\n");
+		 return;		
+		}         
+
+	 }else if(strcmp(token, "withdraw") == 0 ) { //withdraw command
+
+		//User has been verified and can now get to conduct other transactions
+               if(atm->session == 1) {
+ 	                 //Yeah get me my cash real quick!!!
+			token = strtok(NULL, space);
+                        int amount =atoi(token);
+			 if (token == NULL ||amount < 0) {
+		             printf("Usage: withdraw <amt>\n");
+			     return;
+			  }else {                            
+			   
+				  if(amount >cur_balance) {
+					//Go work pal
+				   	printf("Insufficient funds\n");
+	 		          }else { 
+                                        FILE *fp;
+ 					//Reduce the balance
+					cur_balance = cur_balance - amount;
+
+					// rewrite to file with new balance
+				        fp = fopen(file_name, "w+");
+				        if (fp != NULL) {
+                                            fprintf(fp, "%s ", pin);
+				            fprintf(fp, "%d", cur_balance);
+				            printf("$%d dispensed\n",amount);
+				        }
+				        fclose(fp);
+				  }				   
+				return;
+			    }
+                
+               }else {
+             	  printf("No user logged in\n");
+		  return;	
+	       }
+          }else if(strcmp(token, "balance") == 0 ) { //balance command
+
+		//User has been verified and can now get to conduct other transactions
+               if(atm->session == 1) {
+ 	                 //Yeah get me my balance real quick
+			 if (strtok(NULL, space) != NULL) {
+		             printf("Usage: balance\n");
+			     
+			  }else {
+			   printf("$%d\n",cur_balance);
+			   
+			 }
+                       return;
+               }else {
+             	  printf("No user logged in\n");
+		  return;	
+	       }
+          } else if(strcmp(token, "end-session") == 0 ) { //end-session command
+
+		//User has been verified and can now get to conduct other transactions
+               if(atm->session == 1) {
+ 	                 //Bye-am out of here ...Thanks though!!			 
+                     atm->session = 0;
+                     //strcpy(file_name,"");
+		     //strcpy(user_name,"");
+		      memset(file_name,0x00,strlen(file_name));
+                      memset(user_name,0x00,strlen(user_name));
+ 		      memset(atm->username,0x00,251);
+		    // cur_balance = 0;
+	             printf("User logged out\n");			  
+  		     return;                
+               }else {
+             	  printf("No user logged in\n");
+		  return;	
+	       }
+		
+           } else {
+                 printf("Invalid command\n");
+  		return;
+           }
+	
 
 }

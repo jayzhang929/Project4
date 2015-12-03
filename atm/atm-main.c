@@ -29,7 +29,7 @@ int main(int arg, char **argv)
     {
         atm_process_command(atm, user_input);
 	if(atm->session == 1) {
-		printf("ATM (%s); ",atm->username);	
+		printf("ATM (%s): ",atm->username);	
 	} else {
         printf("%s", prompt);
 	}

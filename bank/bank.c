@@ -245,12 +245,12 @@ void bank_process_remote_command(Bank *bank, char *command, size_t len)
 	 * it back to the ATM before printing it to stdout.
 	 */
 
-	/*
+	
     char sendline[1000];
     command[len]=0;
     sprintf(sendline, "Bank got: %s", command);
     bank_send(bank, sendline, strlen(sendline));
     printf("Received the following:\n");
     fputs(command, stdout);
-	*/
+	
 }
