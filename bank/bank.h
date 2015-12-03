@@ -31,6 +31,7 @@ typedef struct _Bank
     // Protocol state
     // TODO add more, as needed
     List *users;
+    char *symm_key;
 } Bank;
 
 Bank* bank_create();

@@ -21,6 +21,19 @@ int main(int argc, char**argv)
 
    Bank *bank = bank_create();
 
+   //Check for command line arguements
+    FILE *init_file;
+    init_file = fopen(argv[1],"r");
+    if(argc != 2|| init_file == NULL) {
+      printf("Error opening atm initialization file\n");
+      return 64;
+    } else {
+      char key[1024];
+      fgets(key, 1024, (FILE*) init_file);
+      // printf("key is: %s", key);
+      bank->symm_key = strtok(key, "\n");
+    }
+
    printf("%s", prompt);
    fflush(stdout);
 
