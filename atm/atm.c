@@ -144,7 +144,7 @@ void atm_process_command(ATM *atm, char *command)
 				
 				fclose(dec);
                                 //make call command
-				sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt ",cipher,atm_file);
+				sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt   2>&1",cipher,atm_file); //
 
                                 //Get command from console
 				fp =popen(call,"r");
