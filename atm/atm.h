@@ -27,7 +27,7 @@ typedef struct _ATM
     // TODO add more, as needed
    int session;   //TO kknow if we are in a session or not
    char username[251];  //To hold a users user_name
-   FILE *init; //To initialize the atm.card
+   char symm_key[1024]; //To initialize the atm.card
 } ATM;
 
 ATM* atm_create();

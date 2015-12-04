@@ -38,7 +38,6 @@ void atm_free(ATM *atm)
 {
     if(atm != NULL)
     {  
-	fclose(atm->init);
 	atm->session = 0;
 	memset(atm->username,0x00,251);
         close(atm->sockfd);
@@ -78,7 +77,6 @@ void atm_process_command(ATM *atm, char *command)
     recvline[n]=0;
     fputs(recvline,stdout);
 	*/
-  	char atm_file[] = "file.atm";
 	char user_name[1024],call[1024];
 	char file_name[1024],balbuf[1024];
 	char response[4];
@@ -144,7 +142,7 @@ void atm_process_command(ATM *atm, char *command)
 				
 				fclose(dec);
                                 //make call command
-				sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt ",cipher,atm_file);
+				sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt 2>&1",cipher,atm->symm_key);
 
                                 //Get command from console
 				fp =popen(call,"r");
@@ -241,14 +239,14 @@ void atm_process_command(ATM *atm, char *command)
 		//User has been verified and can now get to conduct other transactions
                if(atm->session == 1) {
  	                 //Yeah get me my cash real quick!!!
-			token = strtok(NULL, space);
-                        int amount =atoi(token);
+			     token = strtok(NULL, space);
+                  
 
-			 if (token == NULL ||amount < 0) {
+			 if (token == NULL) {
 		             printf("Usage: withdraw <amt>\n");
 			     return;
 			  }else {                            
-			   
+			        int amount =atoi(token);
 				  if(amount >cur_balance) {
 					//Go work pal
 				   	printf("Insufficient funds\n");
@@ -273,7 +271,7 @@ void atm_process_command(ATM *atm, char *command)
 			       // strcat(pin,balbuf);    
 //printf("%s\n",balbuf);           
                           //To encrypt and make system call to create .card file
-				sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",balbuf,atm_file,file_name);
+				sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",balbuf,atm->symm_key,file_name);
 				system(call);
                                  //flush call 
 				memset(call,0x00,strlen(call));

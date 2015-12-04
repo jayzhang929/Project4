@@ -87,7 +87,7 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
     if (strcmp(token, create_user) == 0) {
         char pin[1024];
  	    char balbuf[1024];
-        int balance;
+        unsigned int balance;
 
         // get user name
         token = strtok(NULL, space);
@@ -96,7 +96,7 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
         if (token != NULL) {
             
             strcpy(user_name, token);
-
+            
             // get user pin number
             token = strtok(NULL, space);
 
@@ -105,12 +105,14 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                 strcpy(pin, token);
                 // get user balance
                 token = strtok(NULL, space);
-
+                
                 if (token != NULL) {
-                    balance = atoi(token);
+                    char *ptr;
+                    balance = strtoul(token, &ptr, 10);
+                    // printf("balance is: %d\n", balance);
                     token = strtok(NULL, space);
 
-                    if (token != NULL || balance < 0) {
+                    if (token != NULL) {
                         printf("%s\n", create_user_error);
                     } else {
                     

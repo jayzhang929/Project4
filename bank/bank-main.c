@@ -19,6 +19,21 @@ int main(int argc, char**argv)
    char sendline[1000];
    char recvline[1000];
 
+   if (argc != 2) {
+     printf("Error opening bank initialization file\n");
+     return 64;
+   }
+
+   char *token;
+   char argv_cp[1024];
+   strcpy(argv_cp, argv[1]);
+   strtok(argv_cp, ".");
+   token = strtok(NULL, ".");
+   if (strcmp(token, "bank") != 0) {
+    printf("Error opening bank initialization file\n");
+    return 64;
+   }
+
    Bank *bank = bank_create();
 
    //Check for command line arguements
@@ -26,11 +41,11 @@ int main(int argc, char**argv)
    strcpy(bank->symm_key, argv[1]);
    init_file = fopen(argv[1],"r");
     
-   if(argc != 2|| init_file == NULL) {
+   if (init_file == NULL) {
      printf("Error opening bank initialization file\n");
      return 64;
    } 
-   
+
    fclose(init_file);
    printf("%s", prompt);
    fflush(stdout);
