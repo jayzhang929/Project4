@@ -109,7 +109,7 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                     balance = atoi(token);
                     token = strtok(NULL, space);
 
-                    if (token != NULL) {
+                    if (token != NULL || balance < 0) {
                         printf("%s\n", create_user_error);
                     } else {
                     

@@ -143,7 +143,7 @@ void atm_process_command(ATM *atm, char *command)
 				fgets(userpin,1024,stdin);
 				strtok(userpin, "\n");
 				//compare with pin on file
-				printf("%s Got %s\n", pin, userpin);
+				// printf("%s Got %s\n", pin, userpin);
   		           	if(strcmp(userpin,pin) ==0) {	
                                  	printf("Authorized\n");	
 					//start session

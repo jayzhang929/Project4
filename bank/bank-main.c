@@ -25,7 +25,7 @@ int main(int argc, char**argv)
     FILE *init_file;
     init_file = fopen(argv[1],"r");
     if(argc != 2|| init_file == NULL) {
-      printf("Error opening atm initialization file\n");
+      printf("Error opening bank initialization file\n");
       return 64;
     } else {
       char key[1024];

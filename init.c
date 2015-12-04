@@ -13,7 +13,7 @@ int main(int arg, char**argv) {
 	ssize_t read;
 	
 	if(arg !=2) {
-	printf("Usage:init<filename>\n");
+	printf("Usage: init <filename>\n");
 	return 62;
 	}
 
