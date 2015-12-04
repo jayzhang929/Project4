@@ -38,7 +38,7 @@ int main(int arg, char**argv) {
 
          //Check if file already exits
 	if(access(bankp,F_OK) != -1 ||access(atmp,F_OK) !=-1) {
- 	    printf("Error: one of the file already exists\n");
+ 	    printf("Error: one of the files already exists\n");
 	    return 63;
 	}
                  
