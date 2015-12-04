@@ -23,15 +23,16 @@ int main(int argc, char**argv)
 
    //Check for command line arguements
     FILE *init_file;
-    init_file = fopen(argv[1],"r");
-    if(argc != 2|| init_file == NULL) {
+    //init_file = fopen(argv[1],"r");
+    bank->symm_key = fopen(argv[1],"r");
+    if(argc != 2|| bank->symm_key== NULL) {
       printf("Error opening bank initialization file\n");
       return 64;
     } else {
       char key[1024];
-      fgets(key, 1024, (FILE*) init_file);
+      //fgets(key, 1024, (FILE*) init_file);
       // printf("key is: %s", key);
-      bank->symm_key = strtok(key, "\n");
+      //bank->symm_key = strtok(key, "\n");
     }
 
    printf("%s", prompt);
