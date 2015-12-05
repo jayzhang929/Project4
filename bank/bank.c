@@ -142,9 +142,11 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                             
                             // write pin number and balance (with an empty space in between) into the file
 			                char call[1024];
-			
+                            char buffer[1024];
+			                sprintf(buffer, "%s %s", user_name, pin);
+
 		                    //To encrypt and make system call to create .card file
-			                sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",pin,bank->symm_key,file_name);
+			                sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",buffer,bank->symm_key,file_name);
 			                if (system(call) == -1)
                                 printf("Error creating card file for user %s\n", user_name);
 			                else {

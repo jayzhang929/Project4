@@ -184,14 +184,17 @@
 												//Can now use decrypted text for whatever
 										  		//printf("%s",buff); 
 					                                  //TODO change \n
-										  		pin = strtok(buff,"\n");
+								    			strtok(buff, "\n");
+								    			char *name;
+								    			name = strtok(buff," ");
+										  		pin = strtok(NULL," ");
 									             //Prompt for user's pin
 												printf("PIN? ");
 												fgets(userpin,1024,stdin);
 												strtok(userpin, "\n");
 												//compare with pin on file
-												//printf("%s Got %s\n", pin, userpin);
-								  			           	if(strcmp(userpin,pin) ==0) {	
+												// printf("Name:%s  Pin %s\n", name, pin);
+								  			           	if(strcmp(userpin,pin) ==0 &&strcmp(name,user_name)==0) {	
 								        	    	        printf("Authorized\n");	
 															//start session
 															strncpy(atm->username,user_name,strlen(user_name));
