@@ -111,7 +111,7 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                 if (token != NULL && deposit_check(token)) {
 
                     if (too_rich_check(token)) {
-                        printf("%s\n", too_rich_error);
+                        printf("%s\n", create_user_error);
                         return;
                     }
 
