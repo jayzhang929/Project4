@@ -8,7 +8,7 @@ bool user_name_check (char *user_name) {
 	int i;
 	for (i = 0; i < strlen(user_name); i++)
 		if ((int)user_name[i] < 65 
-			|| ((int)user_name[i] > 90 && (int)user_name < 97)
+			|| ((int)user_name[i] > 90 && (int)user_name[i] < 97)
 			|| (int) user_name[i] > 122)
 			return false;
 
