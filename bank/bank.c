@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include "reg_check.c"
 
 Bank* bank_create()
 {
@@ -32,7 +33,7 @@ Bank* bank_create()
     // Set up the protocol state
     // TODO set up more, as needed
     bank->users = list_create();
-   // bank->symm_key;
+
     return bank;
 }
 
@@ -93,7 +94,7 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
         token = strtok(NULL, space);
 
         
-        if (token != NULL) {
+        if (token != NULL && user_name_check(token)) {
             
             strcpy(user_name, token);
             
@@ -101,7 +102,7 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
             token = strtok(NULL, space);
 
             
-            if (token != NULL) {
+            if (token != NULL && pin_check(token)) {
                 strcpy(pin, token);
                 // get user balance
                 token = strtok(NULL, space);
@@ -118,10 +119,15 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                     
                         char *key;
                         key = (char *) malloc(sizeof(user_name) * sizeof(char));
+
                         strcpy(key, user_name);
                         if (list_find(bank->users, key) == NULL) {
-                            
-                            list_add(bank->users, key, "true");
+
+                            unsigned int *balance_pt;
+                            balance_pt = (unsigned int *) malloc(sizeof(unsigned int));
+                            *balance_pt = balance;
+
+                            list_add(bank->users, key, balance_pt);
                             
                             // create card file name
                             strcpy(file_name, user_name);
@@ -130,9 +136,9 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                             // write pin number and balance (with an empty space in between) into the file
 			                char call[1024];
                             //get pin and balance in one string i.e
-			                sprintf(balbuf,"%d",balance);
-			                strcat(pin," ");
-		                    strcat(pin,balbuf);  
+			                // sprintf(balbuf,"%d",balance);
+			                // strcat(pin," ");
+		                    // strcat(pin,balbuf);  
                             // printf("%s\n",pin); //pin = "1234 100"
 			
 		                    //To encrypt and make system call to create .card file
@@ -204,91 +210,17 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
                 if (token == NULL)
                     printf("%s\n", deposit_error);
                 else {
-                    int deposit = atoi(token);
-                    if (strtok(NULL, space) != NULL || deposit < 0)
+                    unsigned int deposit = atoi(token);
+                    if (strtok(NULL, space) != NULL)
                         printf("%s\n", deposit_error);
                     else {
-                        char buff[1024];
-                        strcpy(file_name, user_name);
-                        strcat(file_name, ".card");
+                        unsigned int *cur_b = list_find(bank->users, user_name);
+                        unsigned int new_b = *cur_b + deposit;
+                        *cur_b = new_b;
 
-                        // open file and read in pin and current balance
-                        /*fp = fopen(file_name, "r");
-                        fgets(buff, 1024, (FILE*)fp);
-                        char *pin = strtok(buff, space);
-                        char *current_balance = strtok(NULL, space);
-                        int cur_balance = atoi(current_balance);
-                        cur_balance = cur_balance + deposit;
-                        fclose(fp);*/
+                        printf("$%d %s %s's account\n", deposit, "added to", user_name);
 
-                        FILE *fp, *dec;
-                        char decrypted[1024];
-                        char cipher[1024];
-                        char call[1024];
 
-                        //open .card file and read in cipher
-                        dec = fopen(file_name, "r");
-                        fgets(cipher, 1024, (FILE*)dec);            
-                        strtok(cipher, "\n");
-                        fclose(dec);
-                            
-                        //make call command
-                        sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt",cipher,bank->symm_key);
-
-                        //Get command from console
-                        fp =popen(call,"r");
-                        int cur_balance;
-
-                        //flush call to get 
-                        memset(call,0x00,strlen(call));
-                        //if all goes well
-                        if(fp!=NULL) {
-                            fgets(decrypted,1024,fp);
-                            //Can now use decrypted text for whatever
-                            // printf("pin and amount are: %s",decrypted);
-                            strtok(decrypted, "\n");
-                            char *pin = strtok(decrypted, space);
-                            char *current_balance = strtok(NULL, space);
-                            cur_balance = atoi(current_balance);
-                            cur_balance = cur_balance + deposit; 
-                            pclose(fp);
-
-                            // write pin number and balance (with an empty space in between) into the file
-                            char balbuf[1024];
-                            //get pin and balance in one string i.e
-                            sprintf(balbuf,"%d",cur_balance);
-                            strcat(pin," ");
-                            strcat(pin,balbuf);  
-                            // printf("%s\n",pin); //pin = "1234 100"
-            
-                            //To encrypt and make system call to create .card file
-                            sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",pin,bank->symm_key,file_name);
-                            system(call);
-            
-                            //flush call to get 
-                            memset(call,0x00,strlen(call));
-
-                            fprintf(fp, "%s ", pin);
-                            fprintf(fp, "%d", cur_balance);
-                            printf("$%d %s %s's account\n", deposit, "added to", user_name);
-                        }else {
-                            printf("Error couldn't open .card file");
-                        }
-                            
-                        
-
-                        // rewrite to file with old pin and new balance
-                        /*fp = fopen(file_name, "w+");
-                        if (fp == NULL) {
-                            printf("%s ", error_file);
-                            printf("%s\n", user_name); 
-                        } else {
-                            fprintf(fp, "%s ", pin);
-                            fprintf(fp, "%d", cur_balance);
-                            printf("$%d %s %s's account\n", deposit, "added to", user_name);
-                        }
-
-                        fclose(fp);*/
 
                     }
                 }
@@ -307,40 +239,9 @@ void bank_process_local_command(Bank *bank, char *command, size_t len)
             if (list_find(bank->users, user_name) == NULL) {
                 printf("%s\n", "No such user");
             } else { 
-                FILE *fp, *dec;
-                            char decrypted[1024];
-                            char cipher[1024];
-                            char call[1024];
-
-                            strcpy(file_name, user_name);
-                        strcat(file_name, ".card");
-
-                            //open .card file and read in cipher
-                            dec = fopen(file_name, "r");
-                            fgets(cipher, 1024, (FILE*)dec);            
-                            strtok(cipher, "\n");
-                            fclose(dec);
-                            
-                            //make call command
-                            sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt",cipher,bank->symm_key);
-
-                            //Get command from console
-                            fp =popen(call,"r");
-                                 
-                            //if all goes well
-                            if(fp!=NULL) {
-                                fgets(decrypted,1024,fp);
-                                //Can now use decrypted text for whatever
-                                // printf("pin and amount are: %s",decrypted); 
-                                strtok(decrypted, "\n");
-                                char *pin = strtok(decrypted, space);
-                                char *current_balance = strtok(NULL, space);
-                                printf("$%s\n", current_balance);
-                            }else {
-                                printf("Error couldn't open .card file");
-                            }
-                            
-                            pclose(fp);
+                unsigned int *b = list_find(bank->users, user_name);
+                printf("$%d\n", *b);
+                
             }
         }
     } else {
@@ -358,7 +259,119 @@ void bank_process_remote_command(Bank *bank, char *command, size_t len)
 	 * it back to the ATM before printing it to stdout.
 	 */
 
-	
+    FILE *fp;
+    char decrypted[1024];
+    char call[1024];
+                            
+    sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt",command,bank->symm_key);
+
+    fp =popen(call,"r");
+    if(fp!=NULL) {
+        const char space[] = " ";
+        static char begin_session[] = "begin-session";
+        static char withdraw[] = "withdraw";
+        static char balance[] = "balance";
+
+        fgets(decrypted,1024,fp);
+        char *token;
+        strtok(decrypted, "\n");
+        token = strtok(decrypted, space);
+
+        if (strcmp(token, begin_session) == 0) {
+            token = strtok(NULL, space);
+
+            char sendline[1024];
+            char response[4];
+            if (list_find(bank->users, token) == NULL)
+                sprintf(response, "%s", "no");
+            else
+                sprintf(response, "%s", "yes");
+
+            //To encrypt and make system call to create .card file
+            sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",response, bank->symm_key,"temp.txt");
+            system(call);
+
+            FILE *dec;
+            char cipher[1024];
+
+            //open .card file and read in cipher
+            dec = fopen("temp.txt", "r");
+            fgets(cipher, 1024, (FILE*)dec);            
+            strtok(cipher, "\n");
+            fclose(dec);
+            bank_send(bank, cipher, strlen(cipher));
+            system("rm temp.txt");
+
+        } else if (strcmp(token, withdraw) == 0) {
+            char *user_name;
+            char *amount;
+            user_name = strtok(NULL, space);
+            amount = strtok(NULL, space);
+
+            unsigned int withdraw_amt = atoi(amount);
+            unsigned int *cur_b = list_find(bank->users, user_name);
+
+            char sendline[1024];
+            char response[4];
+
+            if (*cur_b >= withdraw_amt) {
+                unsigned int new_b = *cur_b - withdraw_amt;
+                *cur_b = new_b;
+                sprintf(response, "%s", "yes");
+            } else {
+                sprintf(response, "%s", "no");
+            }
+
+            //To encrypt and make system call to create .card file
+            sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",response, bank->symm_key,"temp.txt");
+            system(call);
+
+            FILE *dec;
+            char cipher[1024];
+
+            //open .card file and read in cipher
+            dec = fopen("temp.txt", "r");
+            fgets(cipher, 1024, (FILE*)dec);            
+            strtok(cipher, "\n");
+            fclose(dec);
+            // printf("cipher is: %s\n", cipher);
+            bank_send(bank, cipher, strlen(cipher));
+            system("rm temp.txt");
+            
+        } else if (strcmp(token, balance) == 0){
+            char *user_name;
+            char response[1024];
+            user_name = strtok(NULL, space);
+            unsigned int *cur_b = list_find(bank->users, user_name);
+            
+            sprintf(response, "%u", *cur_b);
+            // printf("response is: %s\n", response);
+            //To encrypt and make system call to create .card file
+            sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s", response, bank->symm_key,"temp.txt");
+            system(call);
+            FILE *dec;
+            char cipher[1024];
+
+            //open .card file and read in cipher
+            dec = fopen("temp.txt", "r");
+            fgets(cipher, 1024, (FILE*)dec);            
+            strtok(cipher, "\n");
+            fclose(dec);
+            // printf("cipher is: %s\n", cipher);
+            bank_send(bank, cipher, strlen(cipher));
+            system("rm temp.txt");
+        }
+
+        // if (strcmp())
+        // printf("name and amount are: %s",decrypted); 
+
+    }else {
+        printf("Error couldn't open .card file");
+    }
+                            
+    pclose(fp);
+
+	/*
     char sendline[4];
     memset(sendline, 0x00, strlen(sendline));
     command[len]=0;
@@ -370,5 +383,6 @@ void bank_process_remote_command(Bank *bank, char *command, size_t len)
     bank_send(bank, sendline, strlen(sendline));
     // printf("Received the following:\n");
     // fputs(command, stdout);
+    */
 	
 }
