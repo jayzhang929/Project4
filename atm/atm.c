@@ -3,6 +3,7 @@
 	#include <string.h>
 	#include <stdlib.h>
 	#include <unistd.h>
+	#include "reg_check.c"
 
 	ATM* atm_create()
 	{
@@ -103,7 +104,7 @@
 	        //get user name
 		    token = strtok(NULL, space);
 	          
-			if (token != NULL) {
+			if (token != NULL && user_name_check(token)) {
 				    strcpy(user_name, token);
 				       
 		            //encrypt username
@@ -112,7 +113,7 @@
 				    sprintf(balbuf,"%s %s","begin-session",user_name);
 					       
 		            //To encrypt and make system call to create .card file
-					sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s  -out %s",balbuf,"file.atm","command.txt");
+					sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s  -out %s",balbuf,atm->symm_key,"command.txt");
 					system(call);
 		                                 
 					//get decrypted file and send it
@@ -127,19 +128,20 @@
 			                return;
 						}			
 					fclose(dec);
+					system("rm command.txt");
                     char resp [1024];
 				    memset(response,0x000,strlen(response));
-				    //atm_send(atm, cipher, strlen(cipher));
-		    		//atm_recv(atm,resp,1024);
+				    atm_send(atm, cipher, strlen(cipher));
+		    		atm_recv(atm,resp,1024);
 					//strtok(response, "?");		            
 		            // printf("%s\n", resp);
-					strcpy(resp, "U2FsdGVkX18ds9QlHghY0rtEQqPxzgsPOGp4tdTq3ZM=");
+					//strcpy(response, "U2FsdGVkX18ds9QlHghY0rtEQqPxzgsPOGp4tdTq3ZM=");
 
 
 				 	//decrypt response
 
 					//make call command
-					sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s  ",resp,"file.atm");
+					sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s  ",resp,atm->symm_key);
                     //Get command from console
 				    fp =popen(call,"r");
 	                              
@@ -147,12 +149,10 @@
                           //if all goes well 
 				    	if(fp!=NULL) {
 							    fgets(buff,1024,fp);                                  
-								//Can now use decrypted text for whatever							
-                             									strtok(buff,"\n");													
-								printf("%s %d",buff,strcmp(buff, "yes")); 
+								//Can now use decrypted text for whatever
+								//printf("%s",buff); 
 								    //Check response 
-								
-     								  //strtok(buff," ");
+								strtok(buff,"\n");
 				  		        if(strcmp(buff, "yes") == 0){
 						            //printf("WHAT\n");
 						            //Search for .card file			         
@@ -175,7 +175,7 @@
 								  		fgets(cipher, 1024, (FILE*)dec);
 								  		strtok(cipher, "\n");
 				                                                            //make call command
-										sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt 2>&1",cipher,"file.atm");
+										sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt 2>&1",cipher,atm->symm_key);
 				                                //Get command from console
 										fp =popen(call,"r");             
 					                        //if all goes well 
@@ -184,13 +184,13 @@
 												//Can now use decrypted text for whatever
 										  		//printf("%s",buff); 
 					                                  //TODO change \n
-										  		//pin = strtok(buff,"\n");
-	pin = strtok(buff," ");								             //Prompt for user's pin
+										  		pin = strtok(buff,"\n");
+									             //Prompt for user's pin
 												printf("PIN? ");
 												fgets(userpin,1024,stdin);
 												strtok(userpin, "\n");
 												//compare with pin on file
-												printf("%s Got %s\n", pin, userpin);
+												//printf("%s Got %s\n", pin, userpin);
 								  			           	if(strcmp(userpin,pin) ==0) {	
 								        	    	        printf("Authorized\n");	
 															//start session
@@ -239,188 +239,160 @@
 
 		 } else if(strcmp(token, "withdraw") == 0 ) { //withdraw command
 
-			//User has been verified and can now get to conduct other transactions
-	               if(atm->session == 1) {
-	 	                 //Yeah get me my cash real quick!!!
-				     token = strtok(NULL, space);
-	                  
+					//User has been verified and can now get to conduct other transactions
+			               if(atm->session == 1) {
+			 	                 //Yeah get me my cash real quick!!!
+						     token = strtok(NULL, space);
+			                  
 
-				 if (token == NULL) {
-			             printf("Usage: withdraw <amt>\n");
-				     return;
-				  }else {                            
-				        int amount =atoi(token);
-                               
- 
-    memset(balbuf,0x00,strlen(balbuf));
-		            memset(call,0x00,strlen(call));
-			    memset(cipher,0x00,strlen(cipher));			
-				    sprintf(balbuf,"%s %s %d","withdraw",user_name,amount);
-					       
-		            //To encrypt and make system call to create .card file
-					sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s  -out %s",balbuf,"file.atm","command.txt");
-					system(call);
-		                                 
-					//get decrypted file and send it
-					dec = fopen("command.txt", "r");
-						if(dec != NULL) {
-							fgets(cipher, 1024, (FILE*)dec);
-					
-							//strtok(cipher, "\n"); 
-							             
-			            } else {
-							printf("Unable to access %s's card\n",user_name);
-			                return;
-						}			
-					fclose(dec);
-                    char resp [1024];
-				   // memset(response,0x000,strlen(response));
-				    //atm_send(atm, cipher, strlen(cipher));
-		    		//atm_recv(atm,resp,1024);
-					//strtok(response, "?");		            
-		            // printf("%s\n", resp);
-					strcpy(resp, "U2FsdGVkX18ds9QlHghY0rtEQqPxzgsPOGp4tdTq3ZM=");
+						if (token == NULL || !withdraw_check(token)) {
+					             printf("Usage: withdraw <amt>\n");
+						     return;
+						    }else {      
 
-
-				 	//decrypt response
-
-					//make call command
-					sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s  ",resp,"file.atm");
-                    //Get command from console
-				    fp =popen(call,"r");
-if(fp!=NULL) {
- memset(buff,0x000,strlen(buff));							    fgets(buff,1024,fp);                                  
-								//Can now use decrypted text for whatever							
-                             									strtok(buff,"\n");
-								//printf("%s %d",buff,strcmp(buff, "yes")); 
+						         if(strcmp(token,"4294967295") > 0) {
+						         	printf("Insufficient funds\n");
+						         	return;
+						         }
+						        char *ptr; 
+						        unsigned int amount =strtoul(token, &ptr, 10);
+		                               
+		 
+			                    memset(balbuf,0x00,strlen(balbuf));
+					            memset(call,0x00,strlen(call));
+						        memset(cipher,0x00,strlen(cipher));			
+							    sprintf(balbuf,"%s %s %u","withdraw",user_name,amount);
+								       
+					            //To encrypt and make system call to create .card file
+								sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s  -out %s",balbuf,atm->symm_key,"command.txt");
+								system(call);
+					                                 
+									//get decrypted file and send it
+									dec = fopen("command.txt", "r");
+										if(dec != NULL) {
+											fgets(cipher, 1024, (FILE*)dec);
+									
+											//strtok(cipher, "\n"); 
+											             
+							            } else {
+											printf("Unable to access %s's card\n",user_name);
+							                return;
+										}			
+									fclose(dec);
+									system("rm command.txt");
+			                    char resp [1024];
+							   // memset(response,0x000,strlen(response));
+							    atm_send(atm, cipher, strlen(cipher));
+					    		atm_recv(atm,resp,1024);
+								//strtok(response, "?");		            
+					            // printf("%s\n", resp);
+								//strcpy(resp, "U2FsdGVkX18ds9QlHghY0rtEQqPxzgsPOGp4tdTq3ZM=");
 
 
-if(strcmp(buff, "yes") == 0){
- printf("$%d dispensed\n",amount);
-}else {
-printf("Insufficient funds\n");
-}
-return ;
-					
-}//ENDIF FOR RESPONSECHECK
+							 	//decrypt response
+
+								//make call command
+								sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s  ",resp,atm->symm_key);
+			                    //Get command from console
+							    fp =popen(call,"r");
+									if(fp!=NULL) {
+									 memset(buff,0x000,strlen(buff));			
+									 fgets(buff,1024,fp);                                  
+									//Can now use decrypted text for whatever							
+									strtok(buff,"\n");
+									//printf("%s %d",buff,strcmp(buff, "yes")); 
 
 
+									if(strcmp(buff, "yes") == 0){
+									 printf("$%u dispensed\n",amount);
+									}else {
+									printf("Insufficient funds\n");
+									}
+								     return ;
+									}
+								
+						    }
+			                
+			            }else {
+			             	  printf("No user logged in\n");
+					            return;	
+				              }
+			     }else if(strcmp(token, "balance") == 0 ) { //balance command
+
+					//User has been verified and can now get to conduct other transactions
+			               if(atm->session == 1) {
+			 	                 //Yeah get me my balance real quick
+						 if (strtok(NULL, space) != NULL) {
+					             printf("Usage: balance\n");
+						     
+						 }else {
+
+		                    memset(balbuf,0x00,strlen(balbuf));
+				            memset(call,0x00,strlen(call));
+					        memset(cipher,0x00,strlen(cipher));			
+						    sprintf(balbuf,"%s %s","balance",user_name);
+							       
+				            //To encrypt and make system call to create .card file
+							sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s  -out %s",balbuf,atm->symm_key,"command.txt");
+							system(call);
+				                                 
+							//get decrypted file and send it
+							dec = fopen("command.txt", "r");
+								if(dec != NULL) {
+									fgets(cipher, 1024, (FILE*)dec);
+							
+									//strtok(cipher, "\n"); 
+									             
+					            } else {
+									printf("Unable to access %s's card\n",user_name);
+					                return;
+								}			
+							fclose(dec);
+							system("rm command.txt");
+		                    char resp [1024];
+						   // memset(response,0x000,strlen(response));
+						    atm_send(atm, cipher, strlen(cipher));
+				    		atm_recv(atm,resp,1024);
+							//strtok(response, "?");		            
+				            // printf("%s\n", resp);
+							//strcpy(resp, "U2FsdGVkX18ds9QlHghY0rtEQqPxzgsPOGp4tdTq3ZM=");
 
 
+						 	//decrypt response
+
+							//make call command
+							sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s  ",resp,atm->symm_key);
+		                    //Get command from console
+						    fp =popen(call,"r");
+							if(fp!=NULL) {
+							 memset(buff,0x000,strlen(buff));	
+							 fgets(buff,1024,fp);                                  
+							//Can now use decrypted text for whatever							
+							
+							 strtok(buff,"\n");
+					         //printf("%s %d",buff,strcmp(buff, "yes"));
+
+							 printf("$%s\n",buff);
 
 
-
-
-
-
-
-					/**  if(amount >cur_balance) {
-						//Go work pal
-					   	printf("Insufficient funds\n");
-		 		          }else { 
-	                                        FILE *fp;
-	 					//Reduce the balance
-						cur_balance = cur_balance - amount;
-
-						
-					memset(balbuf,0x00,strlen(balbuf));			
-					sprintf(balbuf,"%s %d",pin,cur_balance);
-				       
-	                          //To encrypt and make system call to create .card file
-					sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",balbuf,"file.atm",file_name);
-					system(call);
-	                                 //flush call 
-					memset(call,0x00,strlen(call));
-					
-					 printf("$%d dispensed\n",amount);
-					  }				   
-					return;*/
-				    }
-	                
-	               }else {
-	             	  printf("No user logged in\n");
-			  return;	
-		       }
-	          }else if(strcmp(token, "balance") == 0 ) { //balance command
-
-			//User has been verified and can now get to conduct other transactions
-	               if(atm->session == 1) {
-	 	                 //Yeah get me my balance real quick
-				 if (strtok(NULL, space) != NULL) {
-			             printf("Usage: balance\n");
-				     
-				  }else {
-
-    memset(balbuf,0x00,strlen(balbuf));
-		            memset(call,0x00,strlen(call));
-			    memset(cipher,0x00,strlen(cipher));			
-				    sprintf(balbuf,"%s %s","balance",user_name);
-					       
-		            //To encrypt and make system call to create .card file
-					sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s  -out %s",balbuf,"file.atm","command.txt");
-					system(call);
-		                                 
-					//get decrypted file and send it
-					dec = fopen("command.txt", "r");
-						if(dec != NULL) {
-							fgets(cipher, 1024, (FILE*)dec);
-					
-							//strtok(cipher, "\n"); 
-							             
-			            } else {
-							printf("Unable to access %s's card\n",user_name);
-			                return;
-						}			
-					fclose(dec);
-                    char resp [1024];
-				   // memset(response,0x000,strlen(response));
-				    //atm_send(atm, cipher, strlen(cipher));
-		    		//atm_recv(atm,resp,1024);
-					//strtok(response, "?");		            
-		            // printf("%s\n", resp);
-					strcpy(resp, "U2FsdGVkX18ds9QlHghY0rtEQqPxzgsPOGp4tdTq3ZM=");
-
-
-				 	//decrypt response
-
-					//make call command
-					sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s  ",resp,"file.atm");
-                    //Get command from console
-				    fp =popen(call,"r");
-if(fp!=NULL) {
- memset(buff,0x000,strlen(buff));							    fgets(buff,1024,fp);                                  
-								//Can now use decrypted text for whatever							
-                             									strtok(buff,"\n");
-								//printf("%s %d",buff,strcmp(buff, "yes")); 
-
-
-
- printf("$%s\n",buff);
-
-
-					
-}
-
-
-
-
-
-
-				  // printf("$%d\n",cur_balance);
-				   
-				 }
-	                       return;
-	               }else {
-	             	  printf("No user logged in\n");
-			  return;	
-		       }
-	          } else if(strcmp(token, "end-session") == 0 ) { //end-session command
+												
+							}
+						   
+	                    }
+			                       return;
+			         }else {
+			             	  printf("No user logged in\n");
+					  return;	
+				        }
+	    } else if(strcmp(token, "end-session") == 0 ) { //end-session command
 
 			//User has been verified and can now get to conduct other transactions
 	               if(atm->session == 1) {
 	 	                 //Bye-am out of here ...Thanks though!!			 
 	                     atm->session = 0;
-	                      memset(file_name,0x00,strlen(file_name));
+	                     //strcpy(file_name,"");
+			     //strcpy(user_name,"");
+			      memset(file_name,0x00,strlen(file_name));
 	                      memset(user_name,0x00,strlen(user_name));
 	 		      memset(atm->username,0x00,251);
 			    // cur_balance = 0;
