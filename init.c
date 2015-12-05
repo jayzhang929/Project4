@@ -71,6 +71,8 @@ int main(int arg, char**argv) {
 		}
 	
             //Close the files
+		fclose(key);
+		system("rm symm_key");
         if(fclose(bankf) || fclose(atmf)) {
 	  printf("Error creating initialization files\n");
 	  return 64;
