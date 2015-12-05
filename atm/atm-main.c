@@ -37,7 +37,7 @@ int main(int arg, char **argv)
     	printf("Error opening atm initialization file\n");
 	return 64;
     }
-    //strcpy(atm->symm_key, argv[1]);
+    strcpy(atm->symm_key, argv[1]);
     fclose(fp);
     printf("%s", prompt);
     fflush(stdout);

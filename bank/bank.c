@@ -262,10 +262,12 @@ void bank_process_remote_command(Bank *bank, char *command, size_t len)
     FILE *fp;
     char decrypted[1024];
     char call[1024];
-                            
+    strtok(command, "\n");
+    // printf("cipher is: %s\n", command);   
     sprintf(call,"echo %s |openssl enc -aes-256-cbc -d -a -pass file:%s -salt",command,bank->symm_key);
 
     fp =popen(call,"r");
+    memset(call,0x00,strlen(call));
     if(fp!=NULL) {
         const char space[] = " ";
         static char begin_session[] = "begin-session";
@@ -290,7 +292,7 @@ void bank_process_remote_command(Bank *bank, char *command, size_t len)
             //To encrypt and make system call to create .card file
             sprintf(call,"echo %s |openssl enc -aes-256-cbc -e -a -pass file:%s -salt -out %s",response, bank->symm_key,"temp.txt");
             system(call);
-
+            memset(call,0x00,strlen(call)); 
             FILE *dec;
             char cipher[1024];
 
@@ -299,6 +301,7 @@ void bank_process_remote_command(Bank *bank, char *command, size_t len)
             fgets(cipher, 1024, (FILE*)dec);            
             strtok(cipher, "\n");
             fclose(dec);
+            // printf("send cipher: %s\n", cipher);
             bank_send(bank, cipher, strlen(cipher));
             system("rm temp.txt");
 
